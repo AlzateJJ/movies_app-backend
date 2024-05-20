@@ -1,8 +1,11 @@
 const catchError = require('../utils/catchError');
 const Movie = require('../models/Movie');
+const Actor = require('../models/Actor');
+const Director = require('../models/Director');
+const Genre = require('../models/Genre');
 
 const getAll = catchError(async(req, res) => {
-    const results = await Movie.findAll();
+    const results = await Movie.findAll({ include: [Actor, Director, Genre]});
     return res.json(results);
 });
 
@@ -34,11 +37,34 @@ const update = catchError(async(req, res) => {
     return res.json(result[1][0]);
 });
 
-const addMovieGenres = catchError(async(req, res) => {
+const setMovieGenres = catchError(async(req, res) => {
     const { id } = req.params
-    await Movie.setGenres(req.body, {where: { id }} )
-    const genres = Movie.getGenres()
-    return res.json(genres)
+    const movieSelected = await Movie.findByPk(id)
+    if (!movieSelected) return res.status(404).json({message: "movie not found :("})
+
+    await movieSelected.setGenres(req.body)
+    const genres = await movieSelected.getGenres()
+    return res.status(200).json(genres)
+})
+
+const setMovieActors = catchError(async(req, res) => {
+    const { id } = req.params
+    const movieSelected = await Movie.findByPk(id)
+    if (!movieSelected) return res.status(404).json({message: "movie not found :("})
+
+    await movieSelected.setActors(req.body)
+    const genres = await movieSelected.getActors()
+    return res.status(200).json(genres)
+})
+
+const setMovieDirectors = catchError(async(req, res) => {
+    const { id } = req.params
+    const movieSelected = await Movie.findByPk(id)
+    if (!movieSelected) return res.status(404).json({message: "movie not found :("})
+
+    await movieSelected.setDirectors(req.body)
+    const genres = await movieSelected.getDirectors()
+    return res.status(200).json(genres)
 })
 
 module.exports = {
@@ -47,5 +73,7 @@ module.exports = {
     getOne,
     remove,
     update,
-    addMovieGenres
+    setMovieGenres,
+    setMovieActors,
+    setMovieDirectors
 }
